@@ -17,6 +17,9 @@
    <layout class="QHBoxLayout" name="horizontalLayout_4">
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
       <widget class="QWidget" name="flash_screen">
        <widget class="QPushButton" name="btn_to_screen2">
         <property name="geometry">
@@ -46,13 +49,13 @@
        </widget>
       </widget>
       <widget class="QWidget" name="upload_screen">
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>69</x>
-          <y>120</y>
+          <y>50</y>
           <width>721</width>
-          <height>401</height>
+          <height>621</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -148,9 +151,20 @@
               <x>0</x>
               <y>0</y>
               <width>717</width>
-              <height>129</height>
+              <height>239</height>
              </rect>
             </property>
+            <widget class="QWidget" name="horizontalLayoutWidget">
+             <property name="geometry">
+              <rect>
+               <x>-1</x>
+               <y>-1</y>
+               <width>721</width>
+               <height>241</height>
+              </rect>
+             </property>
+             <layout class="QHBoxLayout" name="layout_patients"/>
+            </widget>
            </widget>
           </widget>
          </item>

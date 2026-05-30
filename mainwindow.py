@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         loader = QUiLoader()
-        ui_file = QFile("/home/htic/MLN/ANU-DV/designer/mainwindow.ui")
+        ui_file = QFile("./designer/mainwindow.ui")
         ui_file.open(QFile.ReadOnly)
         self.ui = loader.load(ui_file)
         ui_file.close()

@@ -1,0 +1,4 @@
+local_Server/
+__pycache__/
+*.pyc
+*.pyo

@@ -3,6 +3,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QDate, Qt
 from PySide6.QtWidgets import (
+    QPushButton,
+    QHBoxLayout,
     QFileDialog,
     QListView,
     QTreeView,
@@ -169,9 +171,58 @@ class Screen2Controller(QObject):
 
         patient_id = folder_path.name
 
-        # ---------------------------------------------
-        # COUNT FILES
-        # ---------------------------------------------
+        # =====================================
+        # VALIDATE STRUCTURE
+        # =====================================
+
+        visit_dirs = [
+            d
+            for d in folder_path.iterdir()
+            if d.is_dir()
+        ]
+
+        num_visits = len(visit_dirs)
+
+        structure_ok = True
+        reason = ""
+
+        # Rule 1: 1-5 visits
+        if num_visits < 1 or num_visits > 5:
+
+            structure_ok = False
+            reason = f"{num_visits} visits"
+
+        # Rule 2: Every visit contains DICOMs
+        if structure_ok:
+
+            for visit in visit_dirs:
+
+                dicom_count = len(
+                    list(visit.glob("*.dcm"))
+                )
+
+                if dicom_count == 0:
+
+                    structure_ok = False
+                    reason = f"No DICOMs in {visit.name}"
+                    break
+
+        # Rule 3: No DICOMs in root
+        if structure_ok:
+
+            root_dicoms = len(
+                list(folder_path.glob("*.dcm"))
+            )
+
+            if root_dicoms > 0:
+
+                structure_ok = False
+                reason = "DICOMs in root folder"
+
+        # =====================================
+        # FILE COUNT
+        # =====================================
+
         file_count = len(
             [
                 f
@@ -180,84 +231,149 @@ class Screen2Controller(QObject):
             ]
         )
 
-        # ---------------------------------------------
-        # CARD FRAME
-        # ---------------------------------------------
+        # =====================================
+        # CARD COLORS
+        # =====================================
+
+        if structure_ok:
+            status_text = "Valid"
+        else:
+            status_text = "Invalid"
+
+        # =====================================
+        # CARD
+        # =====================================
+
         card = QFrame()
 
-        card.setFixedSize(180, 120)
+        card.folder_path = str(folder_path)
+
+        card.setFixedSize(220, 160)
+
+        card.setToolTip(reason)
 
         card.setStyleSheet(
             """
             QFrame {
-                background-color: #2b2b2b;
-                border-radius: 12px;
-                border: 1px solid #444444;
+                border: 1px solid #cccccc;
+                border-radius: 8px;
             }
             """
         )
 
-        # ---------------------------------------------
-        # CARD LAYOUT
-        # ---------------------------------------------
         layout = QVBoxLayout(card)
 
-        layout.setContentsMargins(
-            10,
-            10,
-            10,
-            10,
+        # =====================================
+        # TOP BAR
+        # =====================================
+
+        top_bar = QHBoxLayout()
+
+        top_bar.addStretch()
+
+        btn_remove = QPushButton("✕")
+
+        btn_remove.setFixedSize(20, 20)
+
+        btn_remove.clicked.connect(
+            lambda checked=False,
+            c=card,
+            p=str(folder_path):
+            self.remove_patient_card(c, p)
         )
 
-        layout.setSpacing(15)
+        top_bar.addWidget(btn_remove)
 
-        # ---------------------------------------------
-        # PATIENT ID LABEL
-        # ---------------------------------------------
+        layout.addLayout(top_bar)
+
+        # =====================================
+        # LABELS
+        # =====================================
+
         lbl_patient = QLabel(patient_id)
 
-        lbl_patient.setAlignment(
-            Qt.AlignCenter
-        )
+        lbl_patient.setAlignment(Qt.AlignCenter)
 
         lbl_patient.setStyleSheet(
             """
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
+            font-size:16px;
+            font-weight:bold;
             """
         )
 
-        # ---------------------------------------------
-        # FILE COUNT LABEL
-        # ---------------------------------------------
-        lbl_count = QLabel(
-            f"{file_count} files"
+        lbl_files = QLabel(
+            f"Files : {file_count}"
         )
 
-        lbl_count.setAlignment(
+        lbl_files.setAlignment(Qt.AlignCenter)
+
+        visit_info = []
+
+        for idx, visit in enumerate(visit_dirs, start=1):
+
+            file_count_visit = len(
+                [
+                    f
+                    for f in visit.rglob("*")
+                    if f.is_file()
+                ]
+            )
+
+            visit_info.append(
+                f"V{idx}: {file_count_visit}"
+            )
+            
+        lbl_visits = QLabel(
+            f"Visits : {num_visits}"
+        )
+
+        lbl_visits.setAlignment(Qt.AlignCenter)
+
+        lbl_visit_details = QLabel(
+            "\n".join(visit_info)
+        )
+
+        lbl_visit_details.setAlignment(
             Qt.AlignCenter
         )
 
-        lbl_count.setStyleSheet(
-            """
-            font-size: 14px;
-            color: #bbbbbb;
-            """
+        lbl_visit_details.setWordWrap(True)
+
+        lbl_status = QLabel(
+            f"Status : {status_text}"
         )
 
-        # ---------------------------------------------
-        # ADD LABELS TO CARD
-        # ---------------------------------------------
+        lbl_status.setAlignment(Qt.AlignCenter)
+
+
         layout.addWidget(lbl_patient)
+        layout.addWidget(lbl_files)
+        layout.addWidget(lbl_visits)
+        layout.addWidget(lbl_visit_details)
+        layout.addWidget(lbl_status)
 
-        layout.addWidget(lbl_count)
+        self.ui.layout_patients.addWidget(card)
 
-        # ---------------------------------------------
-        # ADD CARD TO HORIZONTAL LAYOUT
-        # ---------------------------------------------
-        self.ui.layout_patients.addWidget(
+    def remove_patient_card(
+        self,
+        card,
+        folder_path,
+    ):
+
+        if folder_path in self.selected_folders:
+
+            self.selected_folders.remove(
+                folder_path
+            )
+
+        self.ui.layout_patients.removeWidget(
             card
+        )
+
+        card.deleteLater()
+
+        print(
+            f"Removed: {folder_path}"
         )
 
     # =================================================
